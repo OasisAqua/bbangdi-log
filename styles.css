@@ -399,7 +399,6 @@ h1 {
 .entry-note-preview {
   margin-top: 3px;
   overflow: hidden;
-  color: var(--ink-soft);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: -0.04em;
