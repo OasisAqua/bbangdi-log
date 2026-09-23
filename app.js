@@ -298,9 +298,11 @@ function renderCalendar() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "day-button";
-    const entryDescription = entry ? `, 운동 ${entry.parts.join(", ")}${entry.note ? `, ${entry.note}` : ""}` : "";
+    const hasCardio = Boolean(entry && entry.parts.includes("유산소"));
+    const entryDescription = entry ? `, 운동 ${entry.parts.join(", ")}${entry.note ? `, ${entry.note}` : ""}${hasCardio ? ", 완전 뿌듯한 날" : ""}` : "";
     button.setAttribute("aria-label", `${year}년 ${month + 1}월 ${day}일${holidayName ? `, ${holidayName}` : ""}${entryDescription}`);
     button.innerHTML = `
+      ${hasCardio ? '<span class="cardio-star" aria-hidden="true">★</span>' : ""}
       <span class="day-topline">
         <span class="day-number">${day}</span>
         ${entry ? '<i class="entry-mark" aria-hidden="true"></i>' : ""}
@@ -340,7 +342,7 @@ function renderBodyParts() {
   refs.bodyPartGrid.innerHTML = "";
   BODY_PARTS.forEach((part) => {
     const label = document.createElement("label");
-    label.className = "body-part-option";
+    label.className = part === "유산소" ? "body-part-option is-cardio" : "body-part-option";
     label.innerHTML = `<input type="checkbox" value="${part}" ${selectedParts.has(part) ? "checked" : ""} /><span>${part}</span>`;
     const input = label.querySelector("input");
     input.addEventListener("change", () => {

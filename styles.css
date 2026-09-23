@@ -10,6 +10,9 @@
   --red-soft: #f8dfda;
   --accent: #ef6b57;
   --accent-dark: #bc4438;
+  --gold: #c9971f;
+  --gold-soft: #f6e9c9;
+  --gold-ink: #2b1d02;
   --navy-soft: #e4e8ed;
   --white: #fffdf8;
   --shadow: 0 18px 50px rgba(34, 30, 22, 0.16);
@@ -32,6 +35,9 @@
   --red-soft: #fee4e2;
   --accent: #e85545;
   --accent-dark: #b8322d;
+  --gold: #c08a1a;
+  --gold-soft: #faf0d6;
+  --gold-ink: #2b1d02;
   --navy-soft: #e8ebef;
   --white: #ffffff;
   --shadow: 0 18px 50px rgba(16, 24, 40, 0.14);
@@ -53,6 +59,9 @@
   --red-soft: #3c2022;
   --accent: #ff7562;
   --accent-dark: #ff9a8c;
+  --gold: #f0c14b;
+  --gold-soft: #4a3a12;
+  --gold-ink: #171a20;
   --navy-soft: #252933;
   --white: #171a20;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.42);
@@ -540,6 +549,28 @@ h1 {
   border-color: var(--ink);
   background: var(--ink);
   color: var(--white);
+}
+
+.body-part-option.is-cardio span {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+
+.body-part-option.is-cardio input:checked + span {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+.cardio-star {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  color: var(--red);
+  font-size: 13px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .body-part-option input:focus-visible + span {
