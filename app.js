@@ -59,6 +59,7 @@ const refs = {
   settingsForm: document.querySelector("#settings-form"),
   customTitle: document.querySelector("#custom-title"),
   phraseList: document.querySelector("#phrase-list"),
+  phraseToggle: document.querySelector("#toggle-phrases"),
   backupStatus: document.querySelector("#backup-status"),
   importData: document.querySelector("#import-data"),
   installButton: document.querySelector("#install-app"),
@@ -364,6 +365,7 @@ function renderPhraseList() {
       refs.customTitle.value = phrase;
       refs.settingsForm.elements["title-mode"].value = "manual";
       renderPhraseList();
+      togglePhraseList();
     });
     refs.phraseList.append(button);
   });
@@ -374,8 +376,15 @@ function openSettings() {
   refs.settingsForm.elements.theme.value = state.settings.theme;
   refs.customTitle.value = state.settings.customTitle;
   refs.backupStatus.textContent = "";
+  refs.phraseList.hidden = true;
+  refs.phraseToggle.textContent = "변경";
   renderPhraseList();
   refs.settingsDialog.showModal();
+}
+
+function togglePhraseList() {
+  refs.phraseList.hidden = !refs.phraseList.hidden;
+  refs.phraseToggle.textContent = refs.phraseList.hidden ? "변경" : "닫기";
 }
 
 function renderJumpMonths() {
@@ -520,6 +529,7 @@ refs.settingsForm.elements.theme.forEach((input) => {
 });
 refs.settingsDialog.addEventListener("close", () => applyTheme(state.settings.theme));
 document.querySelector("#open-settings").addEventListener("click", openSettings);
+refs.phraseToggle.addEventListener("click", togglePhraseList);
 document.querySelector("#prev-month").addEventListener("click", () => changeMonth(-1));
 document.querySelector("#next-month").addEventListener("click", () => changeMonth(1));
 document.querySelector("#open-jump").addEventListener("click", openJumpDialog);
