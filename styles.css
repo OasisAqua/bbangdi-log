@@ -565,10 +565,11 @@ h1 {
 
 .cardio-star {
   position: absolute;
-  top: 3px;
-  right: 4px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: var(--red);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1;
   pointer-events: none;
 }
