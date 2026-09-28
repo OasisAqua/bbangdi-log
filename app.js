@@ -60,6 +60,9 @@ const refs = {
   customTitle: document.querySelector("#custom-title"),
   phraseList: document.querySelector("#phrase-list"),
   phraseToggle: document.querySelector("#toggle-phrases"),
+  phraseAddRow: document.querySelector("#phrase-add-row"),
+  newPhrase: document.querySelector("#new-phrase"),
+  addPhrase: document.querySelector("#add-phrase"),
   backupStatus: document.querySelector("#backup-status"),
   importData: document.querySelector("#import-data"),
   installButton: document.querySelector("#install-app"),
@@ -73,12 +76,16 @@ const refs = {
 };
 
 function loadState() {
-  const fallback = { entries: {}, settings: { titleMode: "auto", customTitle: PHRASES[0], theme: "paper" } };
+  const fallback = { entries: {}, phrases: [...PHRASES], settings: { titleMode: "auto", customTitle: PHRASES[0], theme: "paper" } };
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!stored || typeof stored !== "object") return fallback;
+    const storedPhrases = Array.isArray(stored.phrases)
+      ? stored.phrases.map(sanitizeTitle).filter(Boolean)
+      : [];
     return {
       entries: stored.entries && typeof stored.entries === "object" ? stored.entries : {},
+      phrases: storedPhrases.length ? storedPhrases : [...PHRASES],
       settings: {
         titleMode: stored.settings?.titleMode === "manual" ? "manual" : "auto",
         customTitle: sanitizeTitle(stored.settings?.customTitle) || PHRASES[0],
@@ -135,9 +142,10 @@ function renderTitle() {
     refs.title.textContent = state.settings.customTitle || PHRASES[0];
     return;
   }
+  const pool = state.phrases.length ? state.phrases : PHRASES;
   const start = new Date(today.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((today - start) / 86400000);
-  refs.title.textContent = PHRASES[dayOfYear % PHRASES.length];
+  refs.title.textContent = pool[dayOfYear % pool.length];
 }
 
 function renderMonthPicker() {
@@ -354,21 +362,61 @@ function renderBodyParts() {
   });
 }
 
+let phraseEditMode = false;
+
 function renderPhraseList() {
   refs.phraseList.innerHTML = "";
-  PHRASES.forEach((phrase) => {
+  state.phrases.forEach((phrase, index) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `phrase-button${refs.customTitle.value === phrase ? " selected" : ""}`;
-    button.textContent = phrase;
-    button.addEventListener("click", () => {
-      refs.customTitle.value = phrase;
-      refs.settingsForm.elements["title-mode"].value = "manual";
-      renderPhraseList();
-      togglePhraseList();
-    });
+
+    if (phraseEditMode) {
+      button.className = "phrase-button editing";
+      button.innerHTML = `<span>${escapeHtml(phrase)}</span><i class="phrase-remove" aria-hidden="true">×</i>`;
+      button.setAttribute("aria-label", `${phrase} 삭제`);
+      button.addEventListener("click", () => {
+        if (state.phrases.length <= 1) {
+          showToast("문구가 최소 1개는 있어야 해요");
+          return;
+        }
+        state.phrases.splice(index, 1);
+        saveState();
+        renderTitle();
+        renderPhraseList();
+      });
+    } else {
+      button.className = `phrase-button${refs.customTitle.value === phrase ? " selected" : ""}`;
+      button.textContent = phrase;
+      button.addEventListener("click", () => {
+        refs.customTitle.value = phrase;
+        refs.settingsForm.elements["title-mode"].value = "manual";
+        renderPhraseList();
+      });
+    }
     refs.phraseList.append(button);
   });
+}
+
+function addPhrase() {
+  const value = sanitizeTitle(refs.newPhrase.value);
+  if (!value) return;
+  if (state.phrases.includes(value)) {
+    refs.newPhrase.value = "";
+    showToast("이미 있는 문구예요");
+    return;
+  }
+  state.phrases.push(value);
+  saveState();
+  refs.newPhrase.value = "";
+  renderPhraseList();
+}
+
+function togglePhraseEdit() {
+  phraseEditMode = !phraseEditMode;
+  refs.phraseToggle.textContent = phraseEditMode ? "완료" : "변경";
+  refs.phraseAddRow.hidden = !phraseEditMode;
+  if (phraseEditMode) refs.newPhrase.focus();
+  renderPhraseList();
 }
 
 function openSettings() {
@@ -376,15 +424,11 @@ function openSettings() {
   refs.settingsForm.elements.theme.value = state.settings.theme;
   refs.customTitle.value = state.settings.customTitle;
   refs.backupStatus.textContent = "";
-  refs.phraseList.hidden = true;
+  phraseEditMode = false;
   refs.phraseToggle.textContent = "변경";
+  refs.phraseAddRow.hidden = true;
   renderPhraseList();
   refs.settingsDialog.showModal();
-}
-
-function togglePhraseList() {
-  refs.phraseList.hidden = !refs.phraseList.hidden;
-  refs.phraseToggle.textContent = refs.phraseList.hidden ? "변경" : "닫기";
 }
 
 function renderJumpMonths() {
@@ -455,6 +499,10 @@ async function importData(file) {
     const imported = payload.data || payload;
     if (!imported.entries || !imported.settings) throw new Error("invalid");
     state.entries = imported.entries;
+    const importedPhrases = Array.isArray(imported.phrases)
+      ? imported.phrases.map(sanitizeTitle).filter(Boolean)
+      : [];
+    state.phrases = importedPhrases.length ? importedPhrases : state.phrases;
     state.settings = {
       titleMode: imported.settings.titleMode === "manual" ? "manual" : "auto",
       customTitle: sanitizeTitle(imported.settings.customTitle) || PHRASES[0],
@@ -529,7 +577,13 @@ refs.settingsForm.elements.theme.forEach((input) => {
 });
 refs.settingsDialog.addEventListener("close", () => applyTheme(state.settings.theme));
 document.querySelector("#open-settings").addEventListener("click", openSettings);
-refs.phraseToggle.addEventListener("click", togglePhraseList);
+refs.phraseToggle.addEventListener("click", togglePhraseEdit);
+refs.addPhrase.addEventListener("click", addPhrase);
+refs.newPhrase.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  addPhrase();
+});
 document.querySelector("#prev-month").addEventListener("click", () => changeMonth(-1));
 document.querySelector("#next-month").addEventListener("click", () => changeMonth(1));
 document.querySelector("#open-jump").addEventListener("click", openJumpDialog);

@@ -835,6 +835,52 @@ h1 {
   color: var(--accent-dark);
 }
 
+.phrase-button.editing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.phrase-remove {
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  place-items: center;
+  font-style: normal;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.phrase-add-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.phrase-add-row input {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 13px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.phrase-add-row input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(239, 107, 87, 0.16);
+}
+
+.phrase-add-row .button {
+  min-height: 44px;
+}
+
 .backup-actions {
   grid-template-columns: 1fr 1fr;
   margin-top: 0;
