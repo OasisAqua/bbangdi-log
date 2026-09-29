@@ -106,13 +106,13 @@ function sanitizeTitle(value) {
 }
 
 function normalizeTheme(value) {
-  return ["paper", "white", "black"].includes(value) ? value : "paper";
+  return ["paper", "white", "black", "gray"].includes(value) ? value : "paper";
 }
 
 function applyTheme(theme) {
   const normalized = normalizeTheme(theme);
   document.documentElement.dataset.theme = normalized;
-  const themeColors = { paper: "#f7f2e8", white: "#ffffff", black: "#111318" };
+  const themeColors = { paper: "#f7f2e8", white: "#ffffff", black: "#111318", gray: "#d6dadd" };
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColors[normalized]);
 }
 
