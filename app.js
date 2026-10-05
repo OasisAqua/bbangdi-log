@@ -307,7 +307,7 @@ function renderCalendar() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "day-button";
-    const hasCardio = Boolean(entry && entry.parts.includes("유산소"));
+    const hasCardio = Boolean(entry && entry.parts.length === 1 && entry.parts[0] === "유산소");
     const entryDescription = entry ? `, 운동 ${entry.parts.join(", ")}${entry.note ? `, ${entry.note}` : ""}${hasCardio ? ", 완전 뿌듯한 날" : ""}` : "";
     button.setAttribute("aria-label", `${year}년 ${month + 1}월 ${day}일${holidayName ? `, ${holidayName}` : ""}${entryDescription}`);
     button.innerHTML = `
