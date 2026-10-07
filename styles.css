@@ -429,6 +429,7 @@ h1 {
   text-align: center;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+  word-break: keep-all;
 }
 
 .entry-note-preview {
