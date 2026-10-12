@@ -63,6 +63,11 @@ const refs = {
   phraseAddRow: document.querySelector("#phrase-add-row"),
   newPhrase: document.querySelector("#new-phrase"),
   addPhrase: document.querySelector("#add-phrase"),
+  bodyPartList: document.querySelector("#body-part-list"),
+  bodyPartToggle: document.querySelector("#toggle-body-parts"),
+  bodyPartAddRow: document.querySelector("#body-part-add-row"),
+  newBodyPart: document.querySelector("#new-body-part"),
+  addBodyPart: document.querySelector("#add-body-part"),
   backupStatus: document.querySelector("#backup-status"),
   importData: document.querySelector("#import-data"),
   installButton: document.querySelector("#install-app"),
@@ -76,16 +81,20 @@ const refs = {
 };
 
 function loadState() {
-  const fallback = { entries: {}, phrases: [...PHRASES], settings: { titleMode: "auto", customTitle: PHRASES[0], theme: "paper" } };
+  const fallback = { entries: {}, phrases: [...PHRASES], bodyParts: [...BODY_PARTS], settings: { titleMode: "auto", customTitle: PHRASES[0], theme: "paper" } };
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (!stored || typeof stored !== "object") return fallback;
     const storedPhrases = Array.isArray(stored.phrases)
       ? stored.phrases.map(sanitizeTitle).filter(Boolean)
       : [];
+    const storedBodyParts = Array.isArray(stored.bodyParts)
+      ? stored.bodyParts.map(sanitizeBodyPart).filter(Boolean)
+      : [];
     return {
       entries: stored.entries && typeof stored.entries === "object" ? stored.entries : {},
       phrases: storedPhrases.length ? storedPhrases : [...PHRASES],
+      bodyParts: storedBodyParts.length ? storedBodyParts : [...BODY_PARTS],
       settings: {
         titleMode: stored.settings?.titleMode === "manual" ? "manual" : "auto",
         customTitle: sanitizeTitle(stored.settings?.customTitle) || PHRASES[0],
@@ -103,6 +112,10 @@ function saveState() {
 
 function sanitizeTitle(value) {
   return typeof value === "string" ? value.trim().slice(0, 18) : "";
+}
+
+function sanitizeBodyPart(value) {
+  return typeof value === "string" ? value.trim().slice(0, 6) : "";
 }
 
 function normalizeTheme(value) {
@@ -279,7 +292,8 @@ function renderCalendar() {
   refs.calendar.innerHTML = "";
 
   const monthlyEntries = Object.keys(state.entries).filter((key) => key.startsWith(`${year}-${String(month + 1).padStart(2, "0")}-`));
-  refs.workoutCount.textContent = `운동 ${monthlyEntries.length}일`;
+  const yearlyEntries = Object.keys(state.entries).filter((key) => key.startsWith(`${year}-`));
+  refs.workoutCount.textContent = `운동 ${monthlyEntries.length}일 / ${yearlyEntries.length}일`;
 
   for (let index = 0; index < cellCount; index += 1) {
     const cell = document.createElement("div");
@@ -349,7 +363,7 @@ function openEntryDialog(key) {
 
 function renderBodyParts() {
   refs.bodyPartGrid.innerHTML = "";
-  BODY_PARTS.forEach((part) => {
+  state.bodyParts.forEach((part) => {
     const label = document.createElement("label");
     label.className = part === "유산소" ? "body-part-option is-cardio" : "body-part-option";
     label.innerHTML = `<input type="checkbox" value="${part}" ${selectedParts.has(part) ? "checked" : ""} /><span>${part}</span>`;
@@ -419,6 +433,57 @@ function togglePhraseEdit() {
   renderPhraseList();
 }
 
+let bodyPartEditMode = false;
+
+function renderBodyPartList() {
+  refs.bodyPartList.innerHTML = "";
+  state.bodyParts.forEach((part, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+
+    if (bodyPartEditMode) {
+      button.className = "phrase-button editing";
+      button.innerHTML = `<span>${escapeHtml(part)}</span><i class="phrase-remove" aria-hidden="true">×</i>`;
+      button.setAttribute("aria-label", `${part} 삭제`);
+      button.addEventListener("click", () => {
+        if (state.bodyParts.length <= 1) {
+          showToast("카테고리가 최소 1개는 있어야 해요");
+          return;
+        }
+        state.bodyParts.splice(index, 1);
+        saveState();
+        renderBodyPartList();
+      });
+    } else {
+      button.className = "phrase-button";
+      button.textContent = part;
+    }
+    refs.bodyPartList.append(button);
+  });
+}
+
+function addBodyPart() {
+  const value = sanitizeBodyPart(refs.newBodyPart.value);
+  if (!value) return;
+  if (state.bodyParts.includes(value)) {
+    refs.newBodyPart.value = "";
+    showToast("이미 있는 카테고리예요");
+    return;
+  }
+  state.bodyParts.push(value);
+  saveState();
+  refs.newBodyPart.value = "";
+  renderBodyPartList();
+}
+
+function toggleBodyPartEdit() {
+  bodyPartEditMode = !bodyPartEditMode;
+  refs.bodyPartToggle.textContent = bodyPartEditMode ? "완료" : "변경";
+  refs.bodyPartAddRow.hidden = !bodyPartEditMode;
+  if (bodyPartEditMode) refs.newBodyPart.focus();
+  renderBodyPartList();
+}
+
 function openSettings() {
   refs.settingsForm.elements["title-mode"].value = state.settings.titleMode;
   refs.settingsForm.elements.theme.value = state.settings.theme;
@@ -428,6 +493,10 @@ function openSettings() {
   refs.phraseToggle.textContent = "변경";
   refs.phraseAddRow.hidden = true;
   renderPhraseList();
+  bodyPartEditMode = false;
+  refs.bodyPartToggle.textContent = "변경";
+  refs.bodyPartAddRow.hidden = true;
+  renderBodyPartList();
   refs.settingsDialog.showModal();
 }
 
@@ -503,6 +572,10 @@ async function importData(file) {
       ? imported.phrases.map(sanitizeTitle).filter(Boolean)
       : [];
     state.phrases = importedPhrases.length ? importedPhrases : state.phrases;
+    const importedBodyParts = Array.isArray(imported.bodyParts)
+      ? imported.bodyParts.map(sanitizeBodyPart).filter(Boolean)
+      : [];
+    state.bodyParts = importedBodyParts.length ? importedBodyParts : state.bodyParts;
     state.settings = {
       titleMode: imported.settings.titleMode === "manual" ? "manual" : "auto",
       customTitle: sanitizeTitle(imported.settings.customTitle) || PHRASES[0],
@@ -512,6 +585,7 @@ async function importData(file) {
     refs.settingsForm.elements["title-mode"].value = state.settings.titleMode;
     refs.customTitle.value = state.settings.customTitle;
     renderPhraseList();
+    renderBodyPartList();
     render();
     refs.backupStatus.textContent = "기록을 안전하게 불러왔어요.";
   } catch {
@@ -583,6 +657,13 @@ refs.newPhrase.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
   addPhrase();
+});
+refs.bodyPartToggle.addEventListener("click", toggleBodyPartEdit);
+refs.addBodyPart.addEventListener("click", addBodyPart);
+refs.newBodyPart.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  addBodyPart();
 });
 document.querySelector("#prev-month").addEventListener("click", () => changeMonth(-1));
 document.querySelector("#next-month").addEventListener("click", () => changeMonth(1));

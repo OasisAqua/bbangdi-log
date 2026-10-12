@@ -128,6 +128,18 @@
           <label><input type="radio" name="title-mode" value="manual" /><span>직접 고정</span></label>
         </div>
 
+        <section class="settings-section">
+          <div class="section-heading">
+            <h3>운동 카테고리</h3>
+            <button class="text-button" id="toggle-body-parts" type="button">변경</button>
+          </div>
+          <div class="phrase-list" id="body-part-list"></div>
+          <div class="phrase-add-row" id="body-part-add-row" hidden>
+            <input id="new-body-part" maxlength="6" autocomplete="off" placeholder="새 카테고리 입력" />
+            <button class="button button-ghost" id="add-body-part" type="button">추가</button>
+          </div>
+        </section>
+
         <section class="settings-section" id="manual-title-section">
           <label class="note-field" for="custom-title">
             <span>나만의 제목</span>
