@@ -359,6 +359,7 @@ function openEntryDialog(key) {
   refs.deleteEntry.hidden = !entry;
   renderBodyParts();
   refs.entryDialog.showModal();
+  document.activeElement?.blur();
 }
 
 function renderBodyParts() {
@@ -498,6 +499,7 @@ function openSettings() {
   refs.bodyPartAddRow.hidden = true;
   renderBodyPartList();
   refs.settingsDialog.showModal();
+  document.activeElement?.blur();
 }
 
 function renderJumpMonths() {
@@ -522,6 +524,7 @@ function openJumpDialog() {
   jumpYear = viewDate.getFullYear();
   renderJumpMonths();
   refs.jumpDialog.showModal();
+  document.activeElement?.blur();
 }
 
 function changeMonth(amount) {
