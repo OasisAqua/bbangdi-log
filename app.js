@@ -36,6 +36,7 @@ const state = loadState();
 let viewDate = new Date(today.getFullYear(), today.getMonth(), 1);
 let selectedDateKey = null;
 let selectedParts = new Set();
+let dayStarred = false;
 let deferredInstallPrompt = null;
 let toastTimer = null;
 let jumpYear = viewDate.getFullYear();
@@ -321,11 +322,11 @@ function renderCalendar() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "day-button";
-    const hasCardio = Boolean(entry && entry.parts.length === 1 && entry.parts[0] === "유산소");
-    const entryDescription = entry ? `, 운동 ${entry.parts.join(", ")}${entry.note ? `, ${entry.note}` : ""}${hasCardio ? ", 완전 뿌듯한 날" : ""}` : "";
+    const hasStar = Boolean(entry && (entry.star || (entry.parts.length === 1 && entry.parts[0] === "유산소")));
+    const entryDescription = entry ? `, 운동 ${entry.parts.join(", ")}${entry.note ? `, ${entry.note}` : ""}${hasStar ? ", 완전 뿌듯한 날" : ""}` : "";
     button.setAttribute("aria-label", `${year}년 ${month + 1}월 ${day}일${holidayName ? `, ${holidayName}` : ""}${entryDescription}`);
     button.innerHTML = `
-      ${hasCardio ? '<span class="cardio-star" aria-hidden="true">★</span>' : ""}
+      ${hasStar ? '<span class="cardio-star" aria-hidden="true">★</span>' : ""}
       <span class="day-topline">
         <span class="day-number">${day}</span>
         ${entry ? '<i class="entry-mark" aria-hidden="true"></i>' : ""}
@@ -352,6 +353,7 @@ function openEntryDialog(key) {
   const holidayName = holidayData(date.getFullYear()).get(key);
   const entry = state.entries[key];
   selectedParts = new Set(entry?.parts || []);
+  dayStarred = Boolean(entry?.star);
   refs.entryDateLabel.textContent = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 ${["일", "월", "화", "수", "목", "금", "토"][date.getDay()]}요일`;
   refs.entryTitle.textContent = holidayName || "운동 기록";
   refs.entryNote.value = entry?.note || "";
@@ -360,6 +362,32 @@ function openEntryDialog(key) {
   renderBodyParts();
   refs.entryDialog.showModal();
   document.activeElement?.blur();
+}
+
+const STAR_LONG_PRESS_MS = 500;
+
+function attachStarLongPress(label) {
+  let timer = null;
+  let triggered = false;
+
+  label.addEventListener("pointerdown", () => {
+    triggered = false;
+    timer = setTimeout(() => {
+      triggered = true;
+      dayStarred = !dayStarred;
+      showToast(dayStarred ? "이 날에 별표를 등록했어요" : "별표를 지웠어요");
+    }, STAR_LONG_PRESS_MS);
+  });
+  const cancelPress = () => clearTimeout(timer);
+  label.addEventListener("pointerup", cancelPress);
+  label.addEventListener("pointerleave", cancelPress);
+  label.addEventListener("pointercancel", cancelPress);
+  label.addEventListener("click", (event) => {
+    if (!triggered) return;
+    event.preventDefault();
+    triggered = false;
+  });
+  label.addEventListener("contextmenu", (event) => event.preventDefault());
 }
 
 function renderBodyParts() {
@@ -373,6 +401,7 @@ function renderBodyParts() {
       if (input.checked) selectedParts.add(part);
       else selectedParts.delete(part);
     });
+    attachStarLongPress(label);
     refs.bodyPartGrid.append(label);
   });
 }
@@ -617,11 +646,11 @@ refs.entryForm.addEventListener("submit", (event) => {
   }
 
   const note = refs.entryNote.value.trim().slice(0, 24);
-  if (selectedParts.size === 0 && !note) {
+  if (selectedParts.size === 0 && !note && !dayStarred) {
     showToast("운동 부위나 메모를 하나 남겨주세요");
     return;
   }
-  state.entries[selectedDateKey] = { parts: [...selectedParts], note };
+  state.entries[selectedDateKey] = { parts: [...selectedParts], note, star: dayStarred };
   saveState();
   refs.entryDialog.close();
   renderCalendar();

@@ -553,6 +553,8 @@ h1 {
 
 .body-part-option {
   position: relative;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 
 .body-part-option input {
